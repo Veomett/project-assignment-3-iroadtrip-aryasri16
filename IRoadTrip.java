@@ -239,33 +239,64 @@ public class IRoadTrip {
 
 
     public List<String> findPath(String country1, String country2) {
-        Graph map = new Graph();
-        HashMap<String, Double> inner = new HashMap<>();
-        for(String outerKey : borders.keySet()) {
-            if(outerKey != null) {
-                map.addCntry(outerKey);
-            }
+        List<String> rV = new ArrayList<>();
+        PriorityQueue<Node> minheap = new PriorityQueue<>();
+        HashMap<String, Double> map = new HashMap<>();
+        HashMap<String, String> routes = new HashMap<>();
+        Double km = 0.0;
+        Double possibleKM = 0.0;
+        Node curr;
+        String startCode = countryCodes.get(country1);
+        double highestNum = Double.MAX_VALUE;
+        String endCode = "";
+        for (String cntry : graph.keySet()) {
+            map.put(cntry, highestNum);
         }
-        String s = "";
-        for(String outerKey : graph.keySet()) {
-            System.out.println("outer country: " + outerKey);
-            inner = graph.get(outerKey);
-            for(String innerKey : inner.keySet()) {
-                if(!innerKey.equals("")) {
-                    if(countryCodes.containsValue(innerKey)) {
-                        System.out.println(inner.get(innerKey));
-                        map.addDist(outerKey, innerKey, inner.get(innerKey));
-                        System.out.println("added the vertex");
+        map.put(startCode, 0.0);
+        minheap.add(new Node(startCode, 0.0));
+        while (!minheap.isEmpty()) {
+            curr = minheap.peek();
+            minheap.remove(curr);
+            endCode = countryCodes.get(country2);
+            if (curr.country.equals(endCode)) {
+                return reversePath(routes, endCode);
+            }
+            HashMap<String, Double> currentCntry = graph.get(curr.country);
+            for (String newCode : currentCntry.keySet()) {
+                km = graph.get(curr.country).get(newCode);
+                possibleKM = curr.dist + km;
+                if(map.containsKey(newCode)) {
+                    if (possibleKM < map.get(newCode)) {
+                        map.put(newCode, possibleKM);
+                        routes.put(newCode, curr.country);
+                        minheap.offer(new Node(newCode, possibleKM));
                     }
                 }
             }
         }
-        HashMap<String, Double> foundPath = map.dijkstrasAlgo(country1);
-        // Replace with your code
-        return null;
+        return rV;
+    }
+
+    public List<String> reversePath(Map<String, String> route, String country2) {
+        List<String> countryRoute = new ArrayList<>();
+        String curr = country2;
+        while (curr != null) {
+            countryRoute.add(curr);
+            curr = route.get(curr);
+        }
+        return reverseHelper(countryRoute);
+    }
+
+    public List<String> reverseHelper(List<String> countryRoute) {
+        ArrayList<String> rV = new ArrayList<>();
+        for(int i = countryRoute.size() - 1; i >= 0; i--) {
+            rV.add(countryRoute.get(i));
+        }
+        return rV;
     }
 
     public void acceptUserInput() {
+
         // Replace with your code
         System.out.println("IRoadTrip - skeleton");
     }
@@ -275,21 +306,9 @@ public class IRoadTrip {
         String[] args2 = {"borders.txt", "capdist.csv", "state_name.tsv"};
         IRoadTrip a3 = new IRoadTrip(args2);
         //Hashmaps h = new Hashmaps(args2);
-        List<String> e = a3.findPath("United States of America", "Canada");
+        List<String> am = a3.findPath("Yemen", "Jordan");
         a3.acceptUserInput();
 
-    }
-
-    class Edge {
-        String startCntry;
-        String endCntry;
-        double distance;
-
-        public Edge(String sc, String ec, double d) {
-            startCntry = sc;
-            endCntry = ec;
-            distance = d;
-        }
     }
 
     class Node implements Comparable<Node>{
@@ -306,55 +325,5 @@ public class IRoadTrip {
             return rV;
         }
     }
-
-    class Graph {
-        HashMap<String, List<Edge>> vertexArr;
-        public Graph() {
-            vertexArr = new HashMap<>();
-        }
-
-        public void addCntry(String country) {
-            vertexArr.put(country, new ArrayList<>());
-        }
-        public void addDist(String start, String end, double dist) {
-            Edge vEdge1 = new Edge(start, end, dist);
-            vertexArr.get(start).add(vEdge1);
-            Edge vEdge2 = new Edge(end, start, dist);
-            vertexArr.get(end).add(vEdge2);
-        }
-
-        public HashMap<String, Double> dijkstrasAlgo(String startCntry) {
-            HashMap<String, Double> path = new HashMap<>();
-            PriorityQueue<Node> minheap = new PriorityQueue<>();
-            String c = "";
-            for(String cntry : vertexArr.keySet()) {
-                path.put(cntry, (double) MAX_VALUE);
-            }
-
-            path.put(startCntry, 0.0);
-            Node n = new Node(startCntry, 0.0);
-            minheap.add(n);
-
-            while(!minheap.isEmpty()) {
-                Node currCntry = minheap.peek();
-                c = currCntry.country;
-                System.out.println("country: " + c);
-                String code = countryCodes.get(c);
-                for(Edge d : vertexArr.get(code)) {
-                    String newCntry = d.endCntry;
-                    double nextPath = path.get(c) + d.distance;
-                    if(nextPath < path.get(newCntry)) {
-                        path.put(newCntry, nextPath);
-                        n = new Node(newCntry, nextPath);
-                        minheap.add(n);
-                    }
-                }
-                minheap.remove(currCntry);
-            }
-            return path;
-        }
-    }
-
-
 }
 
