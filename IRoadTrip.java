@@ -92,36 +92,36 @@ public class IRoadTrip {
      * Creates the graph hashmap
      */
     public HashMap<String, HashMap<String, Double>> creatingGraph() {
-        HashMap<String, HashMap<String, Double>> rV = new HashMap<>();
-        HashMap<String, Double> pl = new HashMap<>();
-        rV = borders;
-        for (String key : rV.keySet()) {
-            pl = rV.get(key);
-            for (String key2 : pl.keySet()) {
-                String put = getCapDist(key, key2);
-                if (!put.equals("")) {
-                    pl.put(key2, Double.parseDouble(put));
+        HashMap<String, HashMap<String, Double>> rV = new HashMap<>(); // create placeholder hashmap
+        HashMap<String, Double> pl = new HashMap<>(); // placeholder for rV's values
+        rV = borders; // set equal to borders since they're the same except for the value in pl
+        for (String key : rV.keySet()) { // parse the outer hashmap
+            pl = rV.get(key); // get the value
+            for (String key2 : pl.keySet()) { // then parse that hashmap
+                String put = getCapDist(key, key2); // get the capital dist
+                if (!put.equals("")) { // if it's not empty
+                    pl.put(key2, Double.parseDouble(put)); // then update the value with the key
                 }
             }
         }
-        return rV;
+        return rV; // return the placeholder
     }
 
     /*
      * Gets the distance between 2 capitals, is a helper function for creatingGraph
      */
     public String getCapDist(String ccode1, String ccode2) {
-        String dist = "";
-        ArrayList<String> ar = distanceFromInitial.get(ccode1);
-        if (ar != null) {
-            for (int i = 0; i < ar.size(); i++) {
-                if (ar.get(i).equals(ccode2)) {
-                    dist = ar.get(i + 1);
-                    break;
+        String dist = ""; // will hold the distance
+        ArrayList<String> ar = distanceFromInitial.get(ccode1); // get the arraylist value from distanceFrom
+        if (ar != null) { // if it exists
+            for (int i = 0; i < ar.size(); i++) { // go ahead and parse the arraylist
+                if (ar.get(i).equals(ccode2)) { // find the country we're adding
+                    dist = ar.get(i + 1); // then add the dist between country1 and 2
+                    break; // exit loop
                 }
             }
         }
-        return dist;
+        return dist; // return the distance
     }
 
     /*
@@ -130,16 +130,16 @@ public class IRoadTrip {
     public HashMap<String, String> buildCountryCodes(String fname) throws IOException {
         File f = new File(fname);
         BufferedReader b = new BufferedReader(new FileReader(f));
-        HashMap<String, String> cc = new HashMap<>();
+        HashMap<String, String> cc = new HashMap<>(); // will hold like this: [country name][id]
         String s = "";
         s = b.readLine();
         String[] parts;
         String prevCode = "";
-        while ((s = b.readLine()) != null) {
-            parts = s.split("\t");
-            if (parts[4].equals("2020-12-31")) {
-                cc.put(parts[2], parts[1]);
-                reverseCC.put(parts[1], parts[2]);
+        while ((s = b.readLine()) != null) { // while the file still has content to read
+            parts = s.split("\t"); // split by tab
+            if (parts[4].equals("2020-12-31")) { // don't include countries that aren't with us anymore
+                cc.put(parts[2], parts[1]); // put it into the hashmap
+                reverseCC.put(parts[1], parts[2]); // put it in reverse order into a diff one as well
             }
             prevCode = parts[1];
         }
@@ -159,15 +159,15 @@ public class IRoadTrip {
         ArrayList<String> a = new ArrayList<>();
         s = b.readLine();
         while ((s = b.readLine()) != null) {
-            parts = s.split(",");
-            curr = parts[1];
-            if (!(curr.equals(prevCode))) {
+            parts = s.split(","); // split by comma
+            curr = parts[1]; // country id of country1
+            if (!(curr.equals(prevCode))) { // if it's a new country, we reinitialize a
                 a = new ArrayList<>();
             }
-            a.add(parts[3]);
+            a.add(parts[3]); // add the country2 code and the dist between capitals
             a.add(parts[4]);
-            dfi.put(parts[1], a);
-            prevCode = curr;
+            dfi.put(parts[1], a); // put it into the hashmap
+            prevCode = curr; // update previous code
         }
         b.close();
         return dfi;
@@ -179,56 +179,56 @@ public class IRoadTrip {
     public HashMap<String, HashMap<String, Double>> buildBorders(String fname) throws IOException {
         File f = new File(fname);
         BufferedReader b = new BufferedReader(new FileReader(f));
-        HashMap<String, HashMap<String, Double>> bb = new HashMap<>();
-        HashMap<String, Double> cntryAndDist = new HashMap<>();
+        HashMap<String, HashMap<String, Double>> bb = new HashMap<>(); // it's going to hold a country, then the countries it borders and their distances
+        HashMap<String, Double> cntryAndDist = new HashMap<>(); // going to hold said bordering countries and their distances
         //ArrayList<String> a2 = new ArrayList<>();
-        String[] cntryBorders;
+        String[] cntryBorders; // holds the arr of borders
         String cntryName, s, placehldr = "";
         String secCntryCode = "";
         String distStr = "";
         double dista = 0;
         int i = 0;
         while ((s = b.readLine()) != null) {
-            cntryName = s.substring(0, s.indexOf('='));
-            cntryName = cntryName.trim();
-            placehldr = cntryName;
-            cntryName = countryCodes.get(cntryName);
-            if (cntryName == null) {
+            cntryName = s.substring(0, s.indexOf('=')); // so we get the name of country1
+            cntryName = cntryName.trim(); // trim it
+            placehldr = cntryName; // set a placeholder in case it doesnt have a corresponding code
+            cntryName = countryCodes.get(cntryName); // get the code
+            if (cntryName == null) { // if it doesnt have a code just put its normal name
                 cntryName = placehldr;
             }
-            s = s.substring(s.indexOf('=') + 1);
-            s = s.trim();
-            cntryBorders = s.split(";");
-            for (int j = 0; j < cntryBorders.length; j++) {
-                String ph = cntryBorders[j];
-                for (i = 0; i < ph.length(); i++) {
+            s = s.substring(s.indexOf('=') + 1); // now we're going to get the bordering countries
+            s = s.trim(); // trim
+            cntryBorders = s.split(";"); // split by ; so every element is like {country name, dist}
+            for (int j = 0; j < cntryBorders.length; j++) { // parse the arr
+                String ph = cntryBorders[j]; // get the first country
+                for (i = 0; i < ph.length(); i++) { // get the name of the country
                     if (!Character.isDigit(ph.charAt(i))) {
                         secCntryCode += ph.charAt(i);
                     } else {
                         break;
                     }
                 }
-                placehldr = secCntryCode.trim();
-                secCntryCode = countryCodes.get(secCntryCode.trim());
-                if (secCntryCode == null) {
+                placehldr = secCntryCode.trim(); // then trim
+                secCntryCode = countryCodes.get(secCntryCode.trim()); // get its code as well
+                if (secCntryCode == null) { // if it doesnt have one just reset to og name
                     secCntryCode = placehldr;
                 }
-                if (ph.length() != 0) {
+                if (ph.length() != 0) { // to get the km dist i used a substring to cut everything but the digits out
                     distStr = ph.substring(i, ph.length() - 3);
                 } else {
                     distStr = "0";
                 }
-                if (distStr.contains(",")) {
+                if (distStr.contains(",")) { // then i removed the , in the 4 digit numbers by taking apart the string and concatenating again
                     String distStr2 = distStr.substring(0, distStr.indexOf(","));
                     String disStr3 = distStr.substring(distStr.indexOf(",") + 1);
                     distStr = distStr2 + disStr3;
                 }
-                dista = Double.parseDouble(distStr);
-                cntryAndDist.put(secCntryCode, dista);
-                bb.put(cntryName, cntryAndDist);
-                secCntryCode = "";
+                dista = Double.parseDouble(distStr); // then covert to a double
+                cntryAndDist.put(secCntryCode, dista); // and then set to the inner hashmap
+                bb.put(cntryName, cntryAndDist); // then set that along with country1 code to the outer hashmap
+                secCntryCode = ""; // reset second country code
             }
-            cntryAndDist = new HashMap<>();
+            cntryAndDist = new HashMap<>(); // initialize the hashmap to be new again
         }
         b.close();
         return bb;
