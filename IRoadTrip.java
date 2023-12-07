@@ -1,18 +1,19 @@
-import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.util.*;
 import java.io.*;
 
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Integer.min;
 
 public class IRoadTrip {
-    HashMap<String, String> countryCodes;
-    HashMap<String, ArrayList<String>> distanceFromInitial;
-    HashMap<String, HashMap<String, Double>> borders;
+    static HashMap<String, String> countryCodes;
+    static HashMap<String, String> reverseCC;
+    static HashMap<String, ArrayList<String>> distanceFromInitial;
+    static HashMap<String, HashMap<String, Double>> borders;
 
-    HashMap<String, HashMap<String, Double>> graph;
+    static HashMap<String, HashMap<String, Double>> graph;
+    static String country1Name;
+    static String country2Name;
 
     public IRoadTrip(String[] args) throws IOException {
+        reverseCC = new HashMap<>();
         countryCodes = buildCountryCodes(args[2]);
         fixStateName();
         borders = buildBorders(args[0]);
@@ -120,6 +121,7 @@ public class IRoadTrip {
             parts = s.split("\t");
             if (parts[4].equals("2020-12-31")) {
                 cc.put(parts[2], parts[1]);
+                reverseCC.put(parts[1], parts[2]);
             }
             prevCode = parts[1];
         }
@@ -209,7 +211,7 @@ public class IRoadTrip {
     }
 
 
-    public double getDistance(String country1, String country2) {
+    public static double getDistance(String country1, String country2) {
         double dist = -1;
         if (!(countryCodes.containsKey(country1))) {
             return dist;
@@ -238,7 +240,7 @@ public class IRoadTrip {
     }
 
 
-    public List<String> findPath(String country1, String country2) {
+    public static List<String> findPath(String country1, String country2) {
         List<String> rV = new ArrayList<>();
         PriorityQueue<Node> minheap = new PriorityQueue<>();
         HashMap<String, Double> map = new HashMap<>();
@@ -269,7 +271,7 @@ public class IRoadTrip {
                     if (possibleKM < map.get(newCode)) {
                         map.put(newCode, possibleKM);
                         routes.put(newCode, curr.country);
-                        minheap.offer(new Node(newCode, possibleKM));
+                        minheap.add(new Node(newCode, possibleKM));
                     }
                 }
             }
@@ -277,7 +279,7 @@ public class IRoadTrip {
         return rV;
     }
 
-    public List<String> reversePath(Map<String, String> route, String country2) {
+    public static List<String> reversePath(Map<String, String> route, String country2) {
         List<String> countryRoute = new ArrayList<>();
         String curr = country2;
         while (curr != null) {
@@ -287,7 +289,7 @@ public class IRoadTrip {
         return reverseHelper(countryRoute);
     }
 
-    public List<String> reverseHelper(List<String> countryRoute) {
+    public static List<String> reverseHelper(List<String> countryRoute) {
         ArrayList<String> rV = new ArrayList<>();
         for(int i = countryRoute.size() - 1; i >= 0; i--) {
             rV.add(countryRoute.get(i));
@@ -295,23 +297,57 @@ public class IRoadTrip {
         return rV;
     }
 
-    public void acceptUserInput() {
+    public static void acceptUserInput() {
+        Scanner scan = new Scanner(System.in);
+        boolean bool = false;
+        String c1 = "";
+        String c2 = "";
 
-        // Replace with your code
-        System.out.println("IRoadTrip - skeleton");
+        while(!(c1.equals("EXIT") && c2.equals("EXIT"))) {
+            while (!bool) {
+                System.out.print("Enter the name of the first country (type EXIT to quit): ");
+                c1 = scan.nextLine();
+                if (c1.equals("EXIT")) {
+                    return;
+                }
+                String c1Code = countryCodes.get(c1);
+                if (c1Code != null) {
+                    country1Name = c1;
+                    bool = true;
+                } else {
+                    System.out.println("Invalid country name. Please enter a valid country name.");
+                }
+            }
+            bool = false;
+            while (!bool) {
+                System.out.print("Enter the name of the second country (type EXIT to quit): ");
+                c2 = scan.nextLine();
+                if (c2.equals("EXIT")) {
+                    return;
+                }
+                String c2Code = countryCodes.get(c2);
+                if (c2Code != null) {
+                    country2Name = c2;
+                    bool = true;
+                } else {
+                    System.out.println("Invalid country name. Please enter a valid country name.");
+                }
+            }
+            List<String> rV = findPath(country1Name, country2Name);
+            System.out.printf("Route from %s to %s:", country1Name, country2Name);
+            for (int i = 0; i < rV.size() - 1; i++) {
+                System.out.printf("\n* %s --> %s (%d km.)", reverseCC.get(rV.get(i)), reverseCC.get(rV.get(i + 1)), (int)getDistance(reverseCC.get(rV.get(i)), reverseCC.get(rV.get(i + 1))));
+            }
+            System.out.println();
+            bool = false;
+        }
     }
-
-
     public static void main(String[] args) throws IOException {
-        String[] args2 = {"borders.txt", "capdist.csv", "state_name.tsv"};
-        IRoadTrip a3 = new IRoadTrip(args2);
-        //Hashmaps h = new Hashmaps(args2);
-        List<String> am = a3.findPath("Yemen", "Jordan");
+        IRoadTrip a3 = new IRoadTrip(args);
         a3.acceptUserInput();
-
     }
 
-    class Node implements Comparable<Node>{
+    static class Node implements Comparable<Node>{
         String country;
         double dist;
         public Node(String c, double d) {
